@@ -2,7 +2,9 @@ package za.co.entelect.challenge;
 
 import za.co.entelect.challenge.command.*;
 import za.co.entelect.challenge.entities.*;
-import za.co.entelect.challenge.enums.Terrain;
+import za.co.entelect.challenge.enums.*;
+import za.co.entelect.challenge.helper.*;
+import za.co.entelect.challenge.test.*;
 
 import java.util.*;
 
@@ -31,6 +33,10 @@ public class Bot {
 
     public Command run() {
         List<Object> blocks = getBlocksInFront(myCar.position.lane, myCar.position.block);
+        LookupPowerups lookupPowerups = new LookupPowerups(myCar.powerups);
+        FileMaker fileMaker = new FileMaker(gameState.currentRound);
+        fileMaker.write(lookupPowerups.getHashtable());
+        // fileMaker.write();
         if (myCar.damage >= 5) {
             return new FixCommand();
         }
