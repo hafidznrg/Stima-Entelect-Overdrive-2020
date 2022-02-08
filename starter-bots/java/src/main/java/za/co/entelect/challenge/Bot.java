@@ -13,51 +13,67 @@ import static java.lang.Math.max;
 public class Bot {
 
     private static final int maxSpeed = 9;
-    private List<Integer> directionList = new ArrayList<>();
+    private List<Command> directionList = new ArrayList<>();
 
-    private Random random;
-    private GameState gameState;
-    private Car opponent;
-    private Car myCar;
+    private final static Command ACCELERATE = new AccelerateCommand();
+    private final static Command LIZARD = new LizardCommand();
+    private final static Command OIL = new OilCommand();
+    private final static Command BOOST = new BoostCommand();
+    private final static Command EMP = new EmpCommand();
     private final static Command FIX = new FixCommand();
 
-    public Bot(Random random, GameState gameState) {
-        this.random = random;
-        this.gameState = gameState;
-        this.myCar = gameState.player;
-        this.opponent = gameState.opponent;
+    private final static Command TURN_RIGHT = new ChangeLaneCommand(1);
+    private final static Command TURN_LEFT = new ChangeLaneCommand(-1);
 
-        directionList.add(-1);
-        directionList.add(1);
+    public Bot() {
+        directionList.add(TURN_LEFT);
+        directionList.add(TURN_RIGHT);
     }
 
-    public Command run() {
-        List<Object> blocks = getBlocksInFront(myCar.position.lane, myCar.position.block);
+    public Command run(GameState gameState) {
+        Car myCar = gameState.player;
+        Car opponent = gameState.opponent;
+
+        // GetBlocks
+        // Belum dicek tapi ngga ada error
+        List<Object> blocksLeft = Collections.emptyList();
+        List<Object> blocksRight = Collections.emptyList();
+        List<Object> blocks = getBlocksInFront(myCar.position.lane, myCar.position.block, myCar.speed, gameState);
+        
+        if (myCar.position.lane > 1){
+            blocksLeft = getBlocksInFront(myCar.position.lane - 1, myCar.position.block, myCar.speed - 1, gameState);
+        }
+        
+        if (myCar.position.lane < 4){
+            blocksRight = getBlocksInFront(myCar.position.lane + 1, myCar.position.block, myCar.speed - 1, gameState);
+        }
+        
+        List<Object> nextBlocks = blocks.subList(0,1);
         LookupPowerups lookupPowerups = new LookupPowerups(myCar.powerups);
         FileMaker fileMaker = new FileMaker(gameState.currentRound);
         fileMaker.write(lookupPowerups.getHashtable());
-        // fileMaker.write();
-        if (myCar.damage >= 5) {
-            return new FixCommand();
+
+        if (myCar.speed == 0 && myCar.damage < 2) {
+            return ACCELERATE;
+        } else if (myCar.damage >= 2) {
+            return FIX;
         }
-        if (blocks.contains(Terrain.MUD)) {
-            int i = random.nextInt(directionList.size());
-            return new ChangeLaneCommand(directionList.get(i));
-        }
-        return new AccelerateCommand();
+
+
+        return ACCELERATE;
     }
 
     /**
-     * Returns map of blocks and the objects in the for the current lanes, returns the amount of blocks that can be
-     * traversed at max speed.
+     * Returns map of blocks and the objects in the for the current lanes, returns
+     * the amount of blocks that can be traversed at max speed.
      **/
-    private List<Object> getBlocksInFront(int lane, int block) {
+    private List<Object> getBlocksInFront(int lane, int block, int speed, GameState gameState) {
         List<Lane[]> map = gameState.lanes;
         List<Object> blocks = new ArrayList<>();
         int startBlock = map.get(0)[0].position.block;
 
         Lane[] laneList = map.get(lane - 1);
-        for (int i = max(block - startBlock, 0); i <= block - startBlock + Bot.maxSpeed; i++) {
+        for (int i = max(block - startBlock, 0); i <= block - startBlock + speed; i++) {
             if (laneList[i] == null || laneList[i].terrain == Terrain.FINISH) {
                 break;
             }
