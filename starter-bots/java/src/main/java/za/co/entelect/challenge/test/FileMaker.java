@@ -11,10 +11,24 @@ public class FileMaker {
     this.round = round;
   }
 
-  public void write(Hashtable<PowerUps, Boolean> hashtable) {
+  public void write(String buffer) {
     try {
       FileWriter myWriter = new FileWriter("rounds/test_" + round.toString() + ".txt");
-      myWriter.write(hashtable.toString());
+      myWriter.write(buffer);
+      myWriter.close();
+    } catch (IOException e) {
+      System.out.println("An error occurred.");
+      e.printStackTrace();
+    }
+  }
+
+  public void write(List<String> buffer) {
+    try {
+      FileWriter myWriter = new FileWriter("rounds/test_" + round.toString() + ".txt");
+      for (int i = 0; i < buffer.size(); i++) {
+        myWriter.write(buffer.get(i));
+        myWriter.write('\n');
+      }
       myWriter.close();
     } catch (IOException e) {
       System.out.println("An error occurred.");
