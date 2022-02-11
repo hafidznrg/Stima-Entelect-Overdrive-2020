@@ -3,6 +3,7 @@ package za.co.entelect.challenge;
 import com.google.gson.Gson;
 import za.co.entelect.challenge.command.Command;
 import za.co.entelect.challenge.entities.GameState;
+import za.co.entelect.challenge.test.*;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -24,6 +25,9 @@ public class Main {
         Scanner sc = new Scanner(System.in);
         Gson gson = new Gson();
         Bot bot = new Bot();
+        Random random = new Random(System.nanoTime());
+        FileMaker fileMaker = new FileMaker(-1);
+        fileMaker.createDir();
 
         while (true) {
             try {
