@@ -33,6 +33,7 @@ public class Bot {
     public Command run(GameState gameState) {
         Car myCar = gameState.player;
         Car opponent = gameState.opponent;
+        FileMaker fileMaker = new FileMaker(gameState.currentRound);
 
         // GetBlocks
         // Belum dicek tapi ngga ada error
@@ -50,18 +51,25 @@ public class Bot {
         
         List<Object> nextBlocks = blocks.subList(0,1);
         LookupPowerups lookupPowerups = new LookupPowerups(myCar.powerups);
-        FileMaker fileMaker = new FileMaker(gameState.currentRound);
-    //    fileMaker.write(lookupPowerups.getHashtable().toString();
         Hashtable<String, Integer> listObstacle = checkBlock(blocks);
         fileMaker.write(listObstacle.toString());
 
+        fileMaker.logger("START ROUND " + gameState.currentRound);
         if (myCar.speed == 0 && myCar.damage < 2) {
+            fileMaker.logger("SPEED == 0 AND DAMAGE < 2");
+            fileMaker.logger("USE COMMAND ACCELERATE");
+            fileMaker.printLog();
             return ACCELERATE;
         } else if (myCar.damage >= 2) {
+            fileMaker.logger("DAMAGE >= 2, WHICH = " + Integer.toString(myCar.damage));
+            fileMaker.logger("USE COMMAND FIX");
+            fileMaker.printLog();
             return FIX;
         }
 
-
+        fileMaker.logger("END OF DECISION TREE");
+        fileMaker.logger("USE COMMAND ACCELERATE");
+        fileMaker.printLog();
         return ACCELERATE;
     }
 
