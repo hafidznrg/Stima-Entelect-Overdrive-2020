@@ -24,6 +24,7 @@ public class Bot {
 
     private final static Command TURN_RIGHT = new ChangeLaneCommand(1);
     private final static Command TURN_LEFT = new ChangeLaneCommand(-1);
+    private LookupPowerups lookupPowerups;
 
     public Bot() {
         directionList.add(TURN_LEFT);
@@ -33,6 +34,7 @@ public class Bot {
     public Command run(GameState gameState) {
         Car myCar = gameState.player;
         Car opponent = gameState.opponent;
+        lookupPowerups = new LookupPowerups(myCar.powerups);
         FileMaker fileMaker = new FileMaker(gameState.currentRound);
 
         // GetBlocks
@@ -50,10 +52,10 @@ public class Bot {
         }
         
         List<Object> nextBlocks = blocks.subList(0,1);
-        LookupPowerups lookupPowerups = new LookupPowerups(myCar.powerups);
-        Hashtable<String, Integer> listObstacle = checkBlock(blocks);
-        fileMaker.write(listObstacle.toString());
-
+        // LookupPowerups lookupPowerups = new LookupPowerups(myCar.powerups);
+        // Hashtable<String, Integer> listObstacle = checkBlock(blocks);
+        // fileMaker.write(listObstacle.toString());
+        
         fileMaker.logger("START ROUND " + gameState.currentRound);
         if (myCar.speed == 0 && myCar.damage < 2) {
             fileMaker.logger("SPEED == 0 AND DAMAGE < 2");
@@ -66,11 +68,59 @@ public class Bot {
             fileMaker.printLog();
             return FIX;
         }
+        
+        Hashtable<String, Integer> obstacleLeft = checkBlock(blocksLeft);
+        Hashtable<String, Integer> obstacleStraight = checkBlock(blocks);
+        Hashtable<String, Integer> obstacleRight = checkBlock(blocksRight);
 
         fileMaker.logger("END OF DECISION TREE");
         fileMaker.logger("USE COMMAND ACCELERATE");
         fileMaker.printLog();
         return ACCELERATE;
+    }
+
+    /**
+     * Decision tree if car lane in 2 or 3
+     * return value {STRAIGHT, LEFT, RIGHT, LIZARD, ALLDAMAGED}
+     */
+    private String middleDecision(obstacleLeft, obstacleStraight, obstacleRight) {
+        if (obstacleStraight.get("TOTALDAMAGE") == 0) {
+            if (obstacleLeft.get("TOTALDAMAGE") == 0 && obstacleRight.get("TOTALDAMAGE") == 0) {
+                int idx = getMax(obstacleStraight.get("TOTALPOWERUPS"), obstacleLeft.get("TOTALPOWERUPS"), obstacleRight.get("TOTALPOWERUPS"));
+                if (idx == 0) return "STRAIGHT";
+                else return idx == 1 ? "LEFT" : "RIGHT";
+            } else if (obstacleLeft.get("TOTALDAMAGE") == 0) {
+                int idx = getMax(obstacleStraight.get("TOTALPOWERUPS"), obstacleLeft.get("TOTALPOWERUPS"));
+                return idx == 0 ? "STRAIGHT" : "LEFT";
+            } else if (obstacleRight.get("TOTALDAMAGE") == 0) {
+                int idx = getMax(obstacleStraight.get("TOTALPOWERUPS"), obstacleRight.get("TOTALPOWERUPS"));
+                return idx == 0 ? "STRAIGHT" : "RIGHT";
+            } else {
+                return "STRAIGHT";
+            }
+        } else if (obstacleLeft.get("TOTALDAMAGE") == 0 && obstacleRight.get("TOTALDAMAGE") == 0) {
+            return myCar.position.lane == 2 ? "RIGHT" : "LEFT";
+        } else if (obstacleLeft.get("TOTALDAMAGE") == 0) {
+            return "LEFT";
+        } else if (obstacleRight.get("TOTALDAMAGE") == 0) {
+            return "RIGHT";
+        } else if (lookupPowerups.hasPowerUp(PowerUps.LIZARD)) {
+            return "LIZARD";
+        } else {
+            return "ALLDAMAGED";
+        }
+    }
+
+    private int getMax(int... values) {
+        int max = values[0];
+        int idx = 0;
+        for (int i = 1; i < values.length; i++) {
+            if (values[i] > max) {
+                max = values[i];
+                idx = i;
+            }
+        }
+        return idx;
     }
 
     /**
