@@ -110,6 +110,59 @@ public class Bot {
             return "ALLDAMAGED";
         }
     }
+    
+
+    /**
+     * Decision tree if car lane in 1
+     * return value {STRAIGHT, RIGHT, LIZARD, ALLDAMAGED}
+     */
+    private String laneOneDecision(obstacleStraight, obstacleRight) {
+        if (obstacleStraight.get("TOTALDAMAGE") == 0) {
+            if (obstacleRight.get("TOTALDAMAGE") == 0) {
+                int idx = getMax(obstacleStraight.get("TOTALPOWERUPS"), obstacleRight.get("TOTALPOWERUPS"));
+                if (idx == 0) return "STRAIGHT";
+                else return "RIGHT";
+            } else if (obstacleRight.get("TOTALDAMAGE") == 0) {
+                return "STRAIGHT";
+            } else if (lookupPowerups.hasPowerUp(PowerUps.LIZARD)) {
+                return "LIZARD";
+            } else {
+                return "ALLDAMAGED";
+            }
+        } else if (obstacleRight.get("TOTALDAMAGE") == 0) {
+            return "RIGHT";
+        } else if (lookupPowerups.hasPowerUp(PowerUps.LIZARD)) {
+            return "LIZARD";
+        } else {
+            return "ALLDAMAGED";
+        }
+    }
+
+    /**
+     * Decision tree if car lane in 4
+     * return value {STRAIGHT, LEFT, LIZARD, ALLDAMAGED}
+     */
+    private String laneFourDecision(obstacleLeft, obstacleStraight){
+        if (obstacleStraight.get("TOTALDAMAGE") == 0) {
+            if (obstacleLeft.get("TOTALDAMAGE") == 0) {
+                int idx = getMax(obstacleStraight.get("TOTALPOWERUPS"), obstacleLeft.get("TOTALPOWERUPS"));
+                if (idx == 0) return "STRAIGHT";
+                else return "LEFT";
+            } else if (obstacleLeft.get("TOTALDAMAGE") == 0) {
+                return "STRAIGHT";
+            } else if (lookupPowerups.hasPowerUp(PowerUps.LIZARD)) {
+                return "LIZARD";
+            } else {
+                return "ALLDAMAGED";
+            }
+        } else if (obstacleLeft.get("TOTALDAMAGE") == 0) {
+            return "LEFT";
+        } else if (lookupPowerups.hasPowerUp(PowerUps.LIZARD)) {
+            return "LIZARD";
+        } else {
+            return "ALLDAMAGED";
+        }
+    }
 
     private int getMax(int... values) {
         int max = values[0];
