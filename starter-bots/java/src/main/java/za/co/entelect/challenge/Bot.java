@@ -13,9 +13,12 @@ import static java.lang.Math.max;
 public class Bot {
 
     private static final int maxSpeed = 9;
+    private int BOOST_SPEED = 15;
     private List<Command> directionList = new ArrayList<>();
 
     private final static Command ACCELERATE = new AccelerateCommand();
+    private final static Command DECELERATE = new DecelerateCommand();
+    private final static Command DO_NOTHING = new DoNothingCommand();
     private final static Command LIZARD = new LizardCommand();
     private final static Command OIL = new OilCommand();
     private final static Command BOOST = new BoostCommand();
@@ -38,7 +41,6 @@ public class Bot {
         FileMaker fileMaker = new FileMaker(gameState.currentRound);
 
         // GetBlocks
-        // Belum dicek tapi ngga ada error
         List<Object> blocksLeft = Collections.emptyList();
         List<Object> blocksRight = Collections.emptyList();
         List<Object> blocks = getBlocksInFront(myCar.position.lane, myCar.position.block, myCar.speed, gameState);
@@ -50,11 +52,6 @@ public class Bot {
         if (myCar.position.lane < 4) {
             blocksRight = getBlocksInFront(myCar.position.lane + 1, myCar.position.block, myCar.speed - 1, gameState);
         }
-
-        List<Object> nextBlocks = blocks.subList(0, 1);
-        // LookupPowerups lookupPowerups = new LookupPowerups(myCar.powerups);
-        // Hashtable<String, Integer> listObstacle = checkBlock(blocks);
-        // fileMaker.write(listObstacle.toString());
 
         fileMaker.logger("START ROUND " + gameState.currentRound);
         if (myCar.speed == 0 && myCar.damage < 2) {
@@ -69,14 +66,115 @@ public class Bot {
             return FIX;
         }
 
+        // Akan menggunakan EMP
+        if (lookupPowerups.hasPowerUp(PowerUps.EMP) && (myCar.position.block < opponent.position.block)
+                && (myCar.position.lane == opponent.position.lane
+                        || (myCar.position.lane == 2 && opponent.position.lane == 1)
+                        || (myCar.position.lane == 3 && opponent.position.lane == 4))) {
+            fileMaker.logger("USE COMMAND EMP");
+            fileMaker.printLog();
+            return EMP;
+        }
+
         Hashtable<String, Integer> obstacleLeft = checkBlocks(blocksLeft);
         Hashtable<String, Integer> obstacleStraight = checkBlocks(blocks);
         Hashtable<String, Integer> obstacleRight = checkBlocks(blocksRight);
+
+        String decision = "";
+
+        if (myCar.position.lane == 1) {
+            fileMaker.logger("LANE 1");
+            decision = laneOneDecision(obstacleStraight, obstacleRight);
+        } else if (myCar.position.lane == 2 || myCar.position.lane == 3) {
+            fileMaker.logger("LANE 2 OR 3");
+            decision = middleDecision(obstacleLeft, obstacleStraight, obstacleRight, myCar.position.lane);
+        } else if (myCar.position.lane == 4) {
+            fileMaker.logger("LANE 4");
+            decision = laneFourDecision(obstacleLeft, obstacleStraight);
+        }
+        fileMaker.logger("DECISION = " + decision);
+
+        switch (decision) {
+            case "STRAIGHT":
+                List<Object> blocksBoost = getBlocksInFront(myCar.position.lane, myCar.position.block, BOOST_SPEED,
+                        gameState);
+                Hashtable<String, Integer> obstacleBoost = checkBlocks(blocksBoost);
+                if (lookupPowerups.hasPowerUp(PowerUps.BOOST) && !myCar.boosting && myCar.speed < maxSpeed
+                        && obstacleBoost.get("TOTALDAMAGE") == 0) {
+                    fileMaker.logger("USE " + (myCar.damage == 0 ? "COMMAND BOOST" : "COMMAND FIX"));
+                    fileMaker.printLog();
+                    return myCar.damage == 0 ? BOOST : FIX;
+                }
+
+                if (myCar.speed != maxSpeed) {
+                    fileMaker.logger("SPEED != MAXSPEED");
+                    List<Object> blocksAccel = getBlocksInFront(myCar.position.lane, myCar.position.block,
+                            next_speed(myCar.speed), gameState);
+                    Hashtable<String, Integer> obstacleAccel = checkBlocks(blocksAccel);
+
+                    if (obstacleAccel.get("TOTALDAMAGE") == 0) {
+                        fileMaker.logger("USE COMMAND ACCELERATE");
+                        fileMaker.printLog();
+                        return ACCELERATE;
+                    }
+                    fileMaker.logger("DOESNT ACCELERATE");
+                }
+
+                if (lookupPowerups.hasPowerUp(PowerUps.TWEET)) {
+                    fileMaker.logger("USE COMMAND TWEET");
+                    fileMaker.printLog();
+                    return new TweetCommand(opponent.position.lane, opponent.position.block + BOOST_SPEED + 1);
+                }
+
+                if (lookupPowerups.hasPowerUp(PowerUps.OIL) && myCar.position.block > opponent.position.block) {
+                    fileMaker.logger("USE COMMAND OIL");
+                    fileMaker.printLog();
+                    return OIL;
+                } else {
+                    fileMaker.logger("USE COMMAND DO_NOTHING");
+                    fileMaker.printLog();
+                    return DO_NOTHING;
+                }
+            case "LEFT":
+                fileMaker.logger("USE COMMAND TURN_LEFT");
+                fileMaker.printLog();
+                return TURN_LEFT;
+            case "RIGHT":
+                fileMaker.logger("USE COMMAND TURN_RIGHT");
+                fileMaker.printLog();
+                return TURN_RIGHT;
+            case "LIZARD":
+                fileMaker.logger("USE COMMAND LIZARD");
+                fileMaker.printLog();
+                return LIZARD;
+            case "ALLDAMAGED":
+                fileMaker.logger("USE COMMAND DO_NOTHING");
+                fileMaker.printLog();
+                return DO_NOTHING;
+        }
 
         fileMaker.logger("END OF DECISION TREE");
         fileMaker.logger("USE COMMAND ACCELERATE");
         fileMaker.printLog();
         return ACCELERATE;
+    }
+
+    private Integer next_speed(int speed) {
+        switch (speed) {
+            case 0:
+                return 3;
+            case 3:
+                return 6;
+            case 5:
+                return 6;
+            case 6:
+                return 8;
+            case 8:
+                return 9;
+            case 9:
+                return 9;
+        }
+        return 0;
     }
 
     /**
@@ -182,7 +280,7 @@ public class Bot {
      **/
     private Hashtable<String, Integer> checkBlocks(List<Object> blocks) {
         Hashtable<String, Integer> map = new Hashtable<>();
-        List<String> keywords = Arrays.asList("MUD", "WALL", "OIL", "CYBERTRUCK", "OIL_POWER", "LIZARD", "EMP", "BOOST",
+        List<String> keywords = Arrays.asList("MUD", "WALL", "OIL_SPILL", "OIL_POWER", "LIZARD", "EMP", "BOOST",
                 "TWEET", "TOTALDAMAGE", "TOTALPOWERUPS", "EMPTY");
         for (String key : keywords) {
             map.put(key, 0);
@@ -210,20 +308,18 @@ public class Bot {
                 return -1;
             case "WALL":
                 return -2;
-            case "OIL":
+            case "OIL_SPILL":
                 return -1;
-            case "CYBERTRUCK":
-                return -2;
             case "OIL_POWER":
-                return 1;
+                return 0;
             case "LIZARD":
-                return 5;
+                return lookupPowerups.countPowerUps(PowerUps.LIZARD) > 1 ? 0 : 3;
             case "EMP":
-                return 10;
+                return 3;
             case "BOOST":
-                return 5;
+                return lookupPowerups.countPowerUps(PowerUps.BOOST) > 2 ? 0 : 2;
             case "TWEET":
-                return 5;
+                return lookupPowerups.countPowerUps(PowerUps.TWEET) > 0 ? 0 : 1;
         }
         return 0;
     }
