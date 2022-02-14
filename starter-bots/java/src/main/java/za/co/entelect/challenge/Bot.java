@@ -42,12 +42,12 @@ public class Bot {
         List<Object> blocksLeft = Collections.emptyList();
         List<Object> blocksRight = Collections.emptyList();
         List<Object> blocks = getBlocksInFront(myCar.position.lane, myCar.position.block, myCar.speed, gameState);
-        
-        if (myCar.position.lane > 1){
+
+        if (myCar.position.lane > 1) {
             blocksLeft = getBlocksInFront(myCar.position.lane - 1, myCar.position.block, myCar.speed - 1, gameState);
         }
-        
-        if (myCar.position.lane < 4){
+
+        if (myCar.position.lane < 4) {
             blocksRight = getBlocksInFront(myCar.position.lane + 1, myCar.position.block, myCar.speed - 1, gameState);
         }
         
@@ -69,9 +69,9 @@ public class Bot {
             return FIX;
         }
         
-        Hashtable<String, Integer> obstacleLeft = checkBlock(blocksLeft);
-        Hashtable<String, Integer> obstacleStraight = checkBlock(blocks);
-        Hashtable<String, Integer> obstacleRight = checkBlock(blocksRight);
+        Hashtable<String, Integer> obstacleLeft = checkBlocks(blocksLeft);
+        Hashtable<String, Integer> obstacleStraight = checkBlocks(blocks);
+        Hashtable<String, Integer> obstacleRight = checkBlocks(blocksRight);
 
         fileMaker.logger("END OF DECISION TREE");
         fileMaker.logger("USE COMMAND ACCELERATE");
@@ -171,48 +171,52 @@ public class Bot {
     /**
      * Return map of obstacle/powerups and count of each
      **/
-    private Hashtable<String, Integer> checkBlock(List<Object> blocks) {
+    private Hashtable<String, Integer> checkBlocks(List<Object> blocks) {
         Hashtable<String, Integer> map = new Hashtable<>();
-        List<String> keywords = Arrays.asList("MUD", "WALL", "OIL", "CYBERTRUCK", "OIL_POWER", "LIZARD", "EMP", "BOOST", "TWEET", "TOTALDAMAGE", "TOTALPOWERUPS", "EMPTY");
-        for (String key : keywords){
+        List<String> keywords = Arrays.asList("MUD", "WALL", "OIL", "CYBERTRUCK", "OIL_POWER", "LIZARD", "EMP", "BOOST",
+                "TWEET", "TOTALDAMAGE", "TOTALPOWERUPS", "EMPTY");
+        for (String key : keywords) {
             map.put(key, 0);
         }
         for (Object block : blocks) {
-            String obstacle = block.toString();
-            map.put(obstacle, map.get(obstacle) + 1);
-            switch (obstacle) {
-                case "MUD":
-                    map.put("TOTALDAMAGE", map.get("TOTALDAMAGE") + 1);
-                    break;
-                case "WALL":
-                    map.put("TOTALDAMAGE", map.get("TOTALDAMAGE") + 2);
-                    break;
-                case "OIL":
-                    map.put("TOTALDAMAGE", map.get("TOTALDAMAGE") + 1);
-                    break;
-                case "CYBERTRUCK":
-                    map.put("TOTALDAMAGE", map.get("TOTALDAMAGE") + 2);
-                    break;
-                case "OIL_POWER":
-                    map.put("TOTALPOWERUPS", map.get("TOTALPOWERUPS") + 1);
-                    break;
-                case "LIZARD":
-                    map.put("TOTALPOWERUPS", map.get("TOTALPOWERUPS") + 5);
-                    break;
-                case "EMP":
-                    map.put("TOTALPOWERUPS", map.get("TOTALPOWERUPS") + 10);
-                    break;
-                case "BOOST":
-                    map.put("TOTALPOWERUPS", map.get("TOTALPOWERUPS") + 5);
-                    break;
-                case "TWEET":
-                    map.put("TOTALPOWERUPS", map.get("TOTALPOWERUPS") + 5);
-                    break;
-                default:
-                    break;
-            }
+            String obj = block.toString();
+            map.put(obj, map.get(obj) + 1);
+            Integer poin = blockPoint(obj);
+            map.put(poin > 0 ? "TOTALPOWERUPS" : "TOTALDAMAGE",
+                    map.get(poin > 0 ? "TOTALPOWERUPS" : "TOTALDAMAGE") + poin);
         }
+        map.put("TOTALDAMAGE", -1 * map.get("TOTALDAMAGE"));
         return map;
+    }
+
+    /**
+     * check point of given block
+     * 
+     * @param obj object type of block
+     * @return point of the given block
+     **/
+    private Integer blockPoint(String obj) {
+        switch (obj) {
+            case "MUD":
+                return -1;
+            case "WALL":
+                return -2;
+            case "OIL":
+                return -1;
+            case "CYBERTRUCK":
+                return -2;
+            case "OIL_POWER":
+                return 1;
+            case "LIZARD":
+                return 5;
+            case "EMP":
+                return 10;
+            case "BOOST":
+                return 5;
+            case "TWEET":
+                return 5;
+        }
+        return 0;
     }
 
     /**
