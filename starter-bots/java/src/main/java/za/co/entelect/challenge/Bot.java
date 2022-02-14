@@ -50,12 +50,12 @@ public class Bot {
         if (myCar.position.lane < 4) {
             blocksRight = getBlocksInFront(myCar.position.lane + 1, myCar.position.block, myCar.speed - 1, gameState);
         }
-        
-        List<Object> nextBlocks = blocks.subList(0,1);
+
+        List<Object> nextBlocks = blocks.subList(0, 1);
         // LookupPowerups lookupPowerups = new LookupPowerups(myCar.powerups);
         // Hashtable<String, Integer> listObstacle = checkBlock(blocks);
         // fileMaker.write(listObstacle.toString());
-        
+
         fileMaker.logger("START ROUND " + gameState.currentRound);
         if (myCar.speed == 0 && myCar.damage < 2) {
             fileMaker.logger("SPEED == 0 AND DAMAGE < 2");
@@ -68,7 +68,7 @@ public class Bot {
             fileMaker.printLog();
             return FIX;
         }
-        
+
         Hashtable<String, Integer> obstacleLeft = checkBlocks(blocksLeft);
         Hashtable<String, Integer> obstacleStraight = checkBlocks(blocks);
         Hashtable<String, Integer> obstacleRight = checkBlocks(blocksRight);
@@ -83,12 +83,16 @@ public class Bot {
      * Decision tree if car lane in 2 or 3
      * return value {STRAIGHT, LEFT, RIGHT, LIZARD, ALLDAMAGED}
      */
-    private String middleDecision(obstacleLeft, obstacleStraight, obstacleRight) {
+    private String middleDecision(Hashtable<String, Integer> obstacleLeft, Hashtable<String, Integer> obstacleStraight,
+            Hashtable<String, Integer> obstacleRight, int lane) {
         if (obstacleStraight.get("TOTALDAMAGE") == 0) {
             if (obstacleLeft.get("TOTALDAMAGE") == 0 && obstacleRight.get("TOTALDAMAGE") == 0) {
-                int idx = getMax(obstacleStraight.get("TOTALPOWERUPS"), obstacleLeft.get("TOTALPOWERUPS"), obstacleRight.get("TOTALPOWERUPS"));
-                if (idx == 0) return "STRAIGHT";
-                else return idx == 1 ? "LEFT" : "RIGHT";
+                int idx = getMax(obstacleStraight.get("TOTALPOWERUPS"), obstacleLeft.get("TOTALPOWERUPS"),
+                        obstacleRight.get("TOTALPOWERUPS"));
+                if (idx == 0)
+                    return "STRAIGHT";
+                else
+                    return idx == 1 ? "LEFT" : "RIGHT";
             } else if (obstacleLeft.get("TOTALDAMAGE") == 0) {
                 int idx = getMax(obstacleStraight.get("TOTALPOWERUPS"), obstacleLeft.get("TOTALPOWERUPS"));
                 return idx == 0 ? "STRAIGHT" : "LEFT";
@@ -99,7 +103,7 @@ public class Bot {
                 return "STRAIGHT";
             }
         } else if (obstacleLeft.get("TOTALDAMAGE") == 0 && obstacleRight.get("TOTALDAMAGE") == 0) {
-            return myCar.position.lane == 2 ? "RIGHT" : "LEFT";
+            return lane == 2 ? "RIGHT" : "LEFT";
         } else if (obstacleLeft.get("TOTALDAMAGE") == 0) {
             return "LEFT";
         } else if (obstacleRight.get("TOTALDAMAGE") == 0) {
@@ -110,18 +114,20 @@ public class Bot {
             return "ALLDAMAGED";
         }
     }
-    
 
     /**
      * Decision tree if car lane in 1
      * return value {STRAIGHT, RIGHT, LIZARD, ALLDAMAGED}
      */
-    private String laneOneDecision(obstacleStraight, obstacleRight) {
+    private String laneOneDecision(Hashtable<String, Integer> obstacleStraight,
+            Hashtable<String, Integer> obstacleRight) {
         if (obstacleStraight.get("TOTALDAMAGE") == 0) {
             if (obstacleRight.get("TOTALDAMAGE") == 0) {
                 int idx = getMax(obstacleStraight.get("TOTALPOWERUPS"), obstacleRight.get("TOTALPOWERUPS"));
-                if (idx == 0) return "STRAIGHT";
-                else return "RIGHT";
+                if (idx == 0)
+                    return "STRAIGHT";
+                else
+                    return "RIGHT";
             } else {
                 return "STRAIGHT";
             }
@@ -138,12 +144,15 @@ public class Bot {
      * Decision tree if car lane in 4
      * return value {STRAIGHT, LEFT, LIZARD, ALLDAMAGED}
      */
-    private String laneFourDecision(obstacleLeft, obstacleStraight){
+    private String laneFourDecision(Hashtable<String, Integer> obstacleLeft,
+            Hashtable<String, Integer> obstacleStraight) {
         if (obstacleStraight.get("TOTALDAMAGE") == 0) {
             if (obstacleLeft.get("TOTALDAMAGE") == 0) {
                 int idx = getMax(obstacleStraight.get("TOTALPOWERUPS"), obstacleLeft.get("TOTALPOWERUPS"));
-                if (idx == 0) return "STRAIGHT";
-                else return "LEFT";
+                if (idx == 0)
+                    return "STRAIGHT";
+                else
+                    return "LEFT";
             } else {
                 return "STRAIGHT";
             }
@@ -233,9 +242,7 @@ public class Bot {
             if (laneList[i] == null || laneList[i].terrain == Terrain.FINISH) {
                 break;
             }
-
             blocks.add(laneList[i].terrain);
-
         }
         return blocks;
     }
