@@ -122,12 +122,8 @@ public class Bot {
                 int idx = getMax(obstacleStraight.get("TOTALPOWERUPS"), obstacleRight.get("TOTALPOWERUPS"));
                 if (idx == 0) return "STRAIGHT";
                 else return "RIGHT";
-            } else if (obstacleRight.get("TOTALDAMAGE") == 0) {
-                return "STRAIGHT";
-            } else if (lookupPowerups.hasPowerUp(PowerUps.LIZARD)) {
-                return "LIZARD";
             } else {
-                return "ALLDAMAGED";
+                return "STRAIGHT";
             }
         } else if (obstacleRight.get("TOTALDAMAGE") == 0) {
             return "RIGHT";
@@ -148,12 +144,8 @@ public class Bot {
                 int idx = getMax(obstacleStraight.get("TOTALPOWERUPS"), obstacleLeft.get("TOTALPOWERUPS"));
                 if (idx == 0) return "STRAIGHT";
                 else return "LEFT";
-            } else if (obstacleLeft.get("TOTALDAMAGE") == 0) {
-                return "STRAIGHT";
-            } else if (lookupPowerups.hasPowerUp(PowerUps.LIZARD)) {
-                return "LIZARD";
             } else {
-                return "ALLDAMAGED";
+                return "STRAIGHT";
             }
         } else if (obstacleLeft.get("TOTALDAMAGE") == 0) {
             return "LEFT";
