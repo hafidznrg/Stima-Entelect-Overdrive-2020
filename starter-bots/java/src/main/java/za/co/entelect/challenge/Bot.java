@@ -1,3 +1,17 @@
+/** @file Bot.java
+ *  @brief This is the main strategy file for running the bot.
+ *  
+ *  This contains the implementation of the bot's strategy 
+ *  using decision tree and weighting algorithm 
+ *  to determine which best strategy at that time 
+ *  using greedy algorithm.
+ * 
+ *  @author Fikri Khoiron Fadhila           (13520056 / fikrikhoironn)
+ *  @author Malik Akbar Hashemi Rafsanjani  (13520105 / malikrafsan)
+ *  @author Hafidz Nur Rahman Ghozali       (13520117 / hafidznrg)
+ *  @bug No known bugs.
+ */
+
 package za.co.entelect.challenge;
 
 import za.co.entelect.challenge.command.*;
@@ -14,6 +28,7 @@ public class Bot {
     private static int maxSpeed = 9;
     private int BOOST_SPEED = 15;
     private List<Command> directionList = new ArrayList<>();
+    private LookupPowerups lookupPowerups;
 
     private final static Command ACCELERATE = new AccelerateCommand();
     private final static Command DECELERATE = new DecelerateCommand();
@@ -23,20 +38,31 @@ public class Bot {
     private final static Command BOOST = new BoostCommand();
     private final static Command EMP = new EmpCommand();
     private final static Command FIX = new FixCommand();
-
     private final static Command TURN_RIGHT = new ChangeLaneCommand(1);
     private final static Command TURN_LEFT = new ChangeLaneCommand(-1);
-    private LookupPowerups lookupPowerups;
 
+    /** @brief Constructor for the Bot class.
+     */
     public Bot() {
         directionList.add(TURN_LEFT);
         directionList.add(TURN_RIGHT);
     }
 
+    /** @brief This is the main function to decide which best strategy at that time.
+     *  
+     *  This function use decision tree based on game state 
+     *  at that time using greedy algorithm. In order to cut down
+     *  branches of decision tree, we also use weighting algorithm.
+     * 
+     *  More detail explanations are available in the report.
+     * 
+     *  @param gameState The current state of the game.
+     *  @return The best strategy at that time.
+     */
     public Command run(GameState gameState) {
         Car myCar = gameState.player;
         Car opponent = gameState.opponent;
-        
+
         maxSpeed = calculateMaxSpeed(myCar.damage);
         lookupPowerups = new LookupPowerups(myCar.powerups);
         FileMaker fileMaker = new FileMaker(gameState.currentRound);
@@ -145,6 +171,11 @@ public class Bot {
         return ACCELERATE;
     }
 
+    /** @brief Calculate the next speed based on current speed.
+     * 
+     *  @param speed current speed of the car
+     *  @return next speed of the car
+     */
     private Integer next_speed(int speed) {
         switch (speed) {
             case 0:
@@ -163,6 +194,11 @@ public class Bot {
         return 0;
     }
 
+    /** @brief Calculate max speed based on car damage
+     * 
+     *  @param damage current damage of the car
+     *  @return max speed of the car
+     */
     private Integer calculateMaxSpeed(int damage) {
         switch (damage) {
             case 0:
@@ -181,14 +217,13 @@ public class Bot {
         return 9;
     }
 
-    /**
-     * Decision tree if current lane is 2 or 3
+    /** @brief Decide type strategy if current lane is 2 or 3
      * 
-     * @param obstacleLeft     left lane
-     * @param obstacleStraight middle lane
-     * @param obstacleRight    right lane
-     * @param lane             current lane
-     * @return decision
+     *  @param obstacleLeft hashtable of obstacles and powerups on left lane
+     *  @param obstacleStraight hashtable of obstacles and powerups on middle lane
+     *  @param obstacleRight hashtable of obstacles and powerups on right lane
+     *  @param lane current lane of the car
+     *  @return string decision
      */
     private String middleDecision(Hashtable<String, Integer> obstacleLeft, Hashtable<String, Integer> obstacleStraight,
             Hashtable<String, Integer> obstacleRight, int lane) {
@@ -222,12 +257,11 @@ public class Bot {
         }
     }
 
-    /**
-     * Decision tree if current lane is 1
+    /** @brief Decide type strategy if current lane is 1
      * 
-     * @param obstacleStraight middle lane
-     * @param obstacleRight    right lane
-     * @return decision
+     *  @param obstacleStraight hashtable of obstacles and powerups on middle lane
+     *  @param obstacleRight hashtable of obstacles and powerups on right lane
+     *  @return string decision
      */
     private String laneOneDecision(Hashtable<String, Integer> obstacleStraight,
             Hashtable<String, Integer> obstacleRight) {
@@ -250,12 +284,11 @@ public class Bot {
         }
     }
 
-    /**
-     * Decision tree if current lane is 4
+    /** @brief Decide type strategy if current lane is 4
      * 
-     * @param obstacleLeft     left lane
-     * @param obstacleStraight middle lane
-     * @return decision
+     *  @param obstacleLeft hashtable of obstacles and powerups on left lane
+     *  @param obstacleStraight hashtable of obstacles and powerups on middle lane
+     *  @return string decision
      */
     private String laneFourDecision(Hashtable<String, Integer> obstacleLeft,
             Hashtable<String, Integer> obstacleStraight) {
@@ -278,6 +311,11 @@ public class Bot {
         }
     }
 
+    /** @brief calculate max value of several integers
+     *  
+     *  @param values several arguments of integers
+     *  @return idx of max value
+     */
     private int getMax(int... values) {
         int max = values[0];
         int idx = 0;
@@ -290,12 +328,11 @@ public class Bot {
         return idx;
     }
 
-    /**
-     * check point of given block
+    /** @brief calculate point of block based on obstacle or powerups on that block
      * 
-     * @param obj object type of block
-     * @return point of the given block
-     **/
+     *  @param obj String of keyword for obstacle or powerups
+     *  @return point of block
+     */
     private Integer blockPoint(String obj) {
         switch (obj) {
             case "MUD":
@@ -322,12 +359,13 @@ public class Bot {
         return 0;
     }
 
-    /**
-     * @param lane      lane number
-     * @param block     block number
-     * @param speed     speed/interval
-     * @param gameState gameState
-     * @return hashtable of obstacles and powerups
+    /** @brief calculate point of list of blocks on one lane based on obstacles and powerups
+     * 
+     *  @param lane lane number
+     *  @param block block number
+     *  @param speed speed/interval
+     *  @param gameState gameState
+     *  @return hashtable of obstacles and powerups
      */
     private Hashtable<String, Integer> getBlocks(int lane, int block, int speed, GameState gameState) {
         Hashtable<String, Integer> hashtable = new Hashtable<>();
