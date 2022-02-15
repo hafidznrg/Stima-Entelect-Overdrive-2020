@@ -1,18 +1,17 @@
 package za.co.entelect.challenge.test;
 
-import za.co.entelect.challenge.enums.*;
 import java.io.*;
 import java.util.*;
 
 public class FileMaker {
-  private Integer round;
-  private String log_round;
+  private static Integer round;
+  private static String log_round;
   private String path_unit_test = "unit_test";
-  private String path_logger = "logger";
+  private String path_logger = "rounds";
 
-  public FileMaker(int round) {
-    this.round = round;
-    this.log_round = "";
+  public FileMaker(int roundArg) {
+    round = roundArg;
+    log_round = "";
   }
 
   public void createDir() {
@@ -59,7 +58,7 @@ public class FileMaker {
 
   public void printLog() {
     try {
-      FileWriter myWriter = new FileWriter(this.path_logger + "/round_" + round.toString() + ".txt");
+      FileWriter myWriter = new FileWriter(this.path_logger + "/" + round.toString() + "/round_log" + ".txt");
       myWriter.write(log_round);
       myWriter.close();
     } catch (IOException e) {

@@ -11,7 +11,6 @@ import java.util.*;
 import static java.lang.Math.max;
 
 public class Bot {
-
     private static final int maxSpeed = 9;
     private int BOOST_SPEED = 15;
     private List<Command> directionList = new ArrayList<>();
@@ -61,12 +60,10 @@ public class Bot {
         if (myCar.speed == 0 && myCar.damage < 2) {
             fileMaker.logger("SPEED == 0 AND DAMAGE < 2");
             fileMaker.logger("USE COMMAND ACCELERATE");
-            fileMaker.printLog();
             return ACCELERATE;
         } else if (myCar.damage >= 2) {
             fileMaker.logger("DAMAGE >= 2, WHICH = " + Integer.toString(myCar.damage));
             fileMaker.logger("USE COMMAND FIX");
-            fileMaker.printLog();
             return FIX;
         }
 
@@ -76,7 +73,6 @@ public class Bot {
                         || (myCar.position.lane == 2 && opponent.position.lane == 1)
                         || (myCar.position.lane == 3 && opponent.position.lane == 4))) {
             fileMaker.logger("USE COMMAND EMP");
-            fileMaker.printLog();
             return EMP;
         }
 
@@ -101,7 +97,6 @@ public class Bot {
                 if (lookupPowerups.hasPowerUp(PowerUps.BOOST) && !myCar.boosting && myCar.speed <= maxSpeed
                         && obstacleBoost.get("TOTALDAMAGE") == 0) {
                     fileMaker.logger("USE " + (myCar.damage == 0 ? "COMMAND BOOST" : "COMMAND FIX"));
-                    fileMaker.printLog();
                     return myCar.damage == 0 ? BOOST : FIX;
                 }
 
@@ -112,7 +107,6 @@ public class Bot {
 
                     if (obstacleAccel.get("TOTALDAMAGE") == 0) {
                         fileMaker.logger("USE COMMAND ACCELERATE");
-                        fileMaker.printLog();
                         return ACCELERATE;
                     }
                     fileMaker.logger("DOESNT ACCELERATE");
@@ -120,40 +114,32 @@ public class Bot {
 
                 if (lookupPowerups.hasPowerUp(PowerUps.TWEET)) {
                     fileMaker.logger("USE COMMAND TWEET");
-                    fileMaker.printLog();
                     return new TweetCommand(opponent.position.lane, opponent.position.block + BOOST_SPEED + 1);
                 }
 
                 if (lookupPowerups.hasPowerUp(PowerUps.OIL) && myCar.position.block > opponent.position.block) {
                     fileMaker.logger("USE COMMAND OIL");
-                    fileMaker.printLog();
                     return OIL;
                 } else {
                     fileMaker.logger("USE COMMAND DO_NOTHING");
-                    fileMaker.printLog();
                     return DO_NOTHING;
                 }
             case "LEFT":
                 fileMaker.logger("USE COMMAND TURN_LEFT");
-                fileMaker.printLog();
                 return TURN_LEFT;
             case "RIGHT":
                 fileMaker.logger("USE COMMAND TURN_RIGHT");
-                fileMaker.printLog();
                 return TURN_RIGHT;
             case "LIZARD":
                 fileMaker.logger("USE COMMAND LIZARD");
-                fileMaker.printLog();
                 return LIZARD;
             case "ALLDAMAGED":
                 fileMaker.logger("USE COMMAND DO_NOTHING");
-                fileMaker.printLog();
                 return DO_NOTHING;
         }
 
         fileMaker.logger("END OF DECISION TREE");
         fileMaker.logger("USE COMMAND ACCELERATE");
-        fileMaker.printLog();
         return ACCELERATE;
     }
 
