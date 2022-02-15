@@ -11,7 +11,7 @@ import java.util.*;
 import static java.lang.Math.max;
 
 public class Bot {
-    private static final int maxSpeed = 9;
+    private static int maxSpeed = 9;
     private int BOOST_SPEED = 15;
     private List<Command> directionList = new ArrayList<>();
 
@@ -36,6 +36,8 @@ public class Bot {
     public Command run(GameState gameState) {
         Car myCar = gameState.player;
         Car opponent = gameState.opponent;
+        
+        maxSpeed = calculateMaxSpeed(myCar.damage);
         lookupPowerups = new LookupPowerups(myCar.powerups);
         FileMaker fileMaker = new FileMaker(gameState.currentRound);
 
@@ -159,6 +161,24 @@ public class Bot {
                 return 9;
         }
         return 0;
+    }
+
+    private Integer calculateMaxSpeed(int damage) {
+        switch (damage) {
+            case 0:
+                return 15;
+            case 1:
+                return 9;
+            case 2:
+                return 8;
+            case 3:
+                return 6;
+            case 4:
+                return 3;
+            case 5:
+                return 0;
+        }
+        return 9;
     }
 
     /**
