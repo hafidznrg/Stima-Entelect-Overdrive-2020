@@ -41,23 +41,25 @@ public class Bot {
     private final static Command TURN_RIGHT = new ChangeLaneCommand(1);
     private final static Command TURN_LEFT = new ChangeLaneCommand(-1);
 
-    /** @brief Constructor for the Bot class.
+    /**
+     * @brief Constructor for the Bot class.
      */
     public Bot() {
         directionList.add(TURN_LEFT);
         directionList.add(TURN_RIGHT);
     }
 
-    /** @brief This is the main function to decide which best strategy at that time.
-     *  
-     *  This function use decision tree based on game state 
-     *  at that time using greedy algorithm. In order to cut down
-     *  branches of decision tree, we also use weighting algorithm.
+    /**
+     * @brief This is the main function to decide which best strategy at that time.
      * 
-     *  More detail explanations are available in the report.
+     *        This function use decision tree based on game state
+     *        at that time using greedy algorithm. In order to cut down
+     *        branches of decision tree, we also use weighting algorithm.
      * 
-     *  @param gameState The current state of the game.
-     *  @return The best strategy at that time.
+     *        More detail explanations are available in the report.
+     * 
+     * @param gameState The current state of the game.
+     * @return The best strategy at that time.
      */
     public Command run(GameState gameState) {
         Car myCar = gameState.player;
@@ -72,6 +74,10 @@ public class Bot {
                 gameState);
         Hashtable<String, Integer> obstacleLeft = new Hashtable<>();
         Hashtable<String, Integer> obstacleRight = new Hashtable<>();
+        Hashtable<String, Integer> obstacleAccel = getBlocks(myCar.position.lane,
+                myCar.position.block, next_speed(myCar.speed), gameState);
+        Hashtable<String, Integer> obstacleBoost = getBlocks(myCar.position.lane, myCar.position.block,
+                maxSpeed, gameState);
 
         if (myCar.position.lane > 1) {
             obstacleLeft = getBlocks(myCar.position.lane - 1, myCar.position.block, myCar.speed - 1, gameState);
@@ -104,6 +110,11 @@ public class Bot {
             return EMP;
         }
 
+        if (lookupPowerups.hasPowerUp(PowerUps.BOOST) && myCar.speed == 3 && obstacleBoost.get("TOTALDAMAGE") <= 2) {
+            fileMaker.logger("USE COMMAND BOOST");
+            return BOOST;
+        }
+
         // Decision Tree based on current lane
         String decision = "";
         if (myCar.position.lane == 1) {
@@ -120,8 +131,6 @@ public class Bot {
 
         switch (decision) {
             case "STRAIGHT":
-                Hashtable<String, Integer> obstacleBoost = getBlocks(myCar.position.lane, myCar.position.block,
-                        BOOST_SPEED, gameState);
                 if (lookupPowerups.hasPowerUp(PowerUps.BOOST) && !myCar.boosting && myCar.speed <= maxSpeed
                         && obstacleBoost.get("TOTALDAMAGE") == 0) {
                     fileMaker.logger("USE " + (myCar.damage == 0 ? "COMMAND BOOST" : "COMMAND FIX"));
@@ -130,8 +139,6 @@ public class Bot {
 
                 if (myCar.speed != maxSpeed) {
                     fileMaker.logger("SPEED != MAXSPEED");
-                    Hashtable<String, Integer> obstacleAccel = getBlocks(myCar.position.lane,
-                            myCar.position.block, next_speed(myCar.speed), gameState);
 
                     if (obstacleAccel.get("TOTALDAMAGE") == 0) {
                         fileMaker.logger("USE COMMAND ACCELERATE");
@@ -141,9 +148,9 @@ public class Bot {
                 }
 
                 if (lookupPowerups.hasPowerUp(PowerUps.EMP) && (myCar.position.block < opponent.position.block)
-                    && (myCar.position.lane == opponent.position.lane
-                            || (myCar.position.lane == 2 && opponent.position.lane == 3)
-                            || (myCar.position.lane == 3 && opponent.position.lane == 2))) {
+                        && (myCar.position.lane == opponent.position.lane
+                                || (myCar.position.lane == 2 && opponent.position.lane == 3)
+                                || (myCar.position.lane == 3 && opponent.position.lane == 2))) {
                     fileMaker.logger("USE COMMAND EMP");
                     return EMP;
                 }
@@ -157,8 +164,17 @@ public class Bot {
                     fileMaker.logger("USE COMMAND OIL");
                     return OIL;
                 } else {
-                    fileMaker.logger("USE COMMAND DO_NOTHING");
-                    return DO_NOTHING;
+                    if ((myCar.position.lane == 1 || obstacleAccel.get("TOTALDAMAGE") <= obstacleLeft.get("TOTALDAMAGE"))
+                        && (myCar.position.lane == 4 || obstacleAccel.get("TOTALDAMAGE") <= obstacleRight.get("TOTALDAMAGE"))) {
+                        fileMaker.logger("ALL DAMAGED : USE COMMAND ACCELERATE");
+                        return ACCELERATE;
+                    } else {
+                        fileMaker.logger("ALL DAMAGED : TURN LEFT OR RIGHT");
+                        if (myCar.position.lane == 1) return TURN_RIGHT;
+                        else if (myCar.position.lane == 4) return TURN_LEFT;
+                        else return (obstacleLeft.get("TOTALDAMAGE") <= obstacleRight.get("TOTALDAMAGE")) ? TURN_LEFT
+                                : TURN_RIGHT;
+                    }
                 }
             case "LEFT":
                 fileMaker.logger("USE COMMAND TURN_LEFT");
@@ -170,8 +186,22 @@ public class Bot {
                 fileMaker.logger("USE COMMAND LIZARD");
                 return LIZARD;
             case "ALLDAMAGED":
-                fileMaker.logger("USE COMMAND DO_NOTHING");
-                return DO_NOTHING;
+                if (lookupPowerups.hasPowerUp(PowerUps.BOOST) && obstacleBoost.get("TOTALDAMAGE") <= 2) {
+                    fileMaker.logger("USE COMMAND BOOST");
+                    return BOOST;
+                } else {
+                    if ((myCar.position.lane == 1 || obstacleAccel.get("TOTALDAMAGE") <= obstacleLeft.get("TOTALDAMAGE"))
+                        && (myCar.position.lane == 4 || obstacleAccel.get("TOTALDAMAGE") <= obstacleRight.get("TOTALDAMAGE"))) {
+                        fileMaker.logger("ALL DAMAGED : USE COMMAND ACCELERATE");
+                        return ACCELERATE;
+                    } else {
+                        fileMaker.logger("ALL DAMAGED : TURN LEFT OR RIGHT");
+                        if (myCar.position.lane == 1) return TURN_RIGHT;
+                        else if (myCar.position.lane == 4) return TURN_LEFT;
+                        else return (obstacleLeft.get("TOTALDAMAGE") <= obstacleRight.get("TOTALDAMAGE")) ? TURN_LEFT
+                                : TURN_RIGHT;
+                    }
+                }
         }
 
         fileMaker.logger("END OF DECISION TREE");
@@ -179,10 +209,11 @@ public class Bot {
         return ACCELERATE;
     }
 
-    /** @brief Calculate the next speed based on current speed.
+    /**
+     * @brief Calculate the next speed based on current speed.
      * 
-     *  @param speed current speed of the car
-     *  @return next speed of the car
+     * @param speed current speed of the car
+     * @return next speed of the car
      */
     private Integer next_speed(int speed) {
         switch (speed) {
@@ -202,10 +233,11 @@ public class Bot {
         return 0;
     }
 
-    /** @brief Calculate max speed based on car damage
+    /**
+     * @brief Calculate max speed based on car damage
      * 
-     *  @param damage current damage of the car
-     *  @return max speed of the car
+     * @param damage current damage of the car
+     * @return max speed of the car
      */
     private Integer calculateMaxSpeed(int damage) {
         switch (damage) {
@@ -225,13 +257,14 @@ public class Bot {
         return 9;
     }
 
-    /** @brief Decide type strategy if current lane is 2 or 3
+    /**
+     * @brief Decide type strategy if current lane is 2 or 3
      * 
-     *  @param obstacleLeft hashtable of obstacles and powerups on left lane
-     *  @param obstacleStraight hashtable of obstacles and powerups on middle lane
-     *  @param obstacleRight hashtable of obstacles and powerups on right lane
-     *  @param lane current lane of the car
-     *  @return string decision
+     * @param obstacleLeft     hashtable of obstacles and powerups on left lane
+     * @param obstacleStraight hashtable of obstacles and powerups on middle lane
+     * @param obstacleRight    hashtable of obstacles and powerups on right lane
+     * @param lane             current lane of the car
+     * @return string decision
      */
     private String middleDecision(Hashtable<String, Integer> obstacleLeft, Hashtable<String, Integer> obstacleStraight,
             Hashtable<String, Integer> obstacleRight, int lane) {
@@ -265,11 +298,12 @@ public class Bot {
         }
     }
 
-    /** @brief Decide type strategy if current lane is 1
+    /**
+     * @brief Decide type strategy if current lane is 1
      * 
-     *  @param obstacleStraight hashtable of obstacles and powerups on middle lane
-     *  @param obstacleRight hashtable of obstacles and powerups on right lane
-     *  @return string decision
+     * @param obstacleStraight hashtable of obstacles and powerups on middle lane
+     * @param obstacleRight    hashtable of obstacles and powerups on right lane
+     * @return string decision
      */
     private String laneOneDecision(Hashtable<String, Integer> obstacleStraight,
             Hashtable<String, Integer> obstacleRight) {
@@ -292,11 +326,12 @@ public class Bot {
         }
     }
 
-    /** @brief Decide type strategy if current lane is 4
+    /**
+     * @brief Decide type strategy if current lane is 4
      * 
-     *  @param obstacleLeft hashtable of obstacles and powerups on left lane
-     *  @param obstacleStraight hashtable of obstacles and powerups on middle lane
-     *  @return string decision
+     * @param obstacleLeft     hashtable of obstacles and powerups on left lane
+     * @param obstacleStraight hashtable of obstacles and powerups on middle lane
+     * @return string decision
      */
     private String laneFourDecision(Hashtable<String, Integer> obstacleLeft,
             Hashtable<String, Integer> obstacleStraight) {
@@ -319,10 +354,11 @@ public class Bot {
         }
     }
 
-    /** @brief calculate max value of several integers
-     *  
-     *  @param values several arguments of integers
-     *  @return idx of max value
+    /**
+     * @brief calculate max value of several integers
+     * 
+     * @param values several arguments of integers
+     * @return idx of max value
      */
     private int getMax(int... values) {
         int max = values[0];
@@ -336,44 +372,47 @@ public class Bot {
         return idx;
     }
 
-    /** @brief calculate point of block based on obstacle or powerups on that block
+    /**
+     * @brief calculate point of block based on obstacle or powerups on that block
      * 
-     *  @param obj String of keyword for obstacle or powerups
-     *  @return point of block
+     * @param obj String of keyword for obstacle or powerups
+     * @return point of block
      */
     private Integer blockPoint(String obj) {
         switch (obj) {
             case "MUD":
                 return -1;
             case "WALL":
-                return -2;
+                return -3;
             case "OIL_SPILL":
                 return -1;
             case "OIL_POWER":
                 return 0;
             case "LIZARD":
-                return lookupPowerups.countPowerUps(PowerUps.LIZARD) > 1 ? 0 : 3;
+                return lookupPowerups.countPowerUps(PowerUps.LIZARD) > 2 ? 0 : 3;
             case "EMP":
                 return 3;
             case "BOOST":
-                return lookupPowerups.countPowerUps(PowerUps.BOOST) > 2 ? 0 : 2;
+                return lookupPowerups.countPowerUps(PowerUps.BOOST) > 3 ? 0 : 2;
             case "TWEET":
                 return lookupPowerups.countPowerUps(PowerUps.TWEET) > 0 ? 0 : 1;
             case "PLAYER":
                 return -1;
             case "CYBERTRUCK":
-                return -2;
+                return -3;
         }
         return 0;
     }
 
-    /** @brief calculate point of list of blocks on one lane based on obstacles and powerups
+    /**
+     * @brief calculate point of list of blocks on one lane based on obstacles and
+     *        powerups
      * 
-     *  @param lane lane number
-     *  @param block block number
-     *  @param speed speed/interval
-     *  @param gameState gameState
-     *  @return hashtable of obstacles and powerups
+     * @param lane      lane number
+     * @param block     block number
+     * @param speed     speed/interval
+     * @param gameState gameState
+     * @return hashtable of obstacles and powerups
      */
     private Hashtable<String, Integer> getBlocks(int lane, int block, int speed, GameState gameState) {
         Hashtable<String, Integer> hashtable = new Hashtable<>();
