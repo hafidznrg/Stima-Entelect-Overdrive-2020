@@ -144,9 +144,9 @@ public class Bot {
                     && (myCar.position.lane == opponent.position.lane
                             || (myCar.position.lane == 2 && opponent.position.lane == 3)
                             || (myCar.position.lane == 3 && opponent.position.lane == 2))) {
-                fileMaker.logger("USE COMMAND EMP");
-                return EMP;
-        }
+                    fileMaker.logger("USE COMMAND EMP");
+                    return EMP;
+                }
 
                 if (lookupPowerups.hasPowerUp(PowerUps.TWEET)) {
                     fileMaker.logger("USE COMMAND TWEET");
