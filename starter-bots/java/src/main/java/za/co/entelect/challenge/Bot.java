@@ -140,6 +140,14 @@ public class Bot {
                     fileMaker.logger("DOESNT ACCELERATE");
                 }
 
+                if (lookupPowerups.hasPowerUp(PowerUps.EMP) && (myCar.position.block < opponent.position.block)
+                    && (myCar.position.lane == opponent.position.lane
+                            || (myCar.position.lane == 2 && opponent.position.lane == 3)
+                            || (myCar.position.lane == 3 && opponent.position.lane == 2))) {
+                fileMaker.logger("USE COMMAND EMP");
+                return EMP;
+        }
+
                 if (lookupPowerups.hasPowerUp(PowerUps.TWEET)) {
                     fileMaker.logger("USE COMMAND TWEET");
                     return new TweetCommand(opponent.position.lane, opponent.position.block + BOOST_SPEED + 1);
