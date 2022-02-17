@@ -23,6 +23,7 @@ import za.co.entelect.challenge.test.*;
 import java.util.*;
 
 import static java.lang.Math.max;
+import static java.lang.Math.abs;
 
 public class Bot {
     private static int maxSpeed = 9;
@@ -148,9 +149,7 @@ public class Bot {
                 }
 
                 if (lookupPowerups.hasPowerUp(PowerUps.EMP) && (myCar.position.block < opponent.position.block)
-                        && (myCar.position.lane == opponent.position.lane
-                                || (myCar.position.lane == 2 && opponent.position.lane == 3)
-                                || (myCar.position.lane == 3 && opponent.position.lane == 2))) {
+                        && (abs(myCar.position.lane - opponent.position.lane) <= 1)) {
                     fileMaker.logger("USE COMMAND EMP");
                     return EMP;
                 }
@@ -164,16 +163,17 @@ public class Bot {
                     fileMaker.logger("USE COMMAND OIL");
                     return OIL;
                 } else {
-                    if ((myCar.position.lane == 1 || obstacleAccel.get("TOTALDAMAGE") <= obstacleLeft.get("TOTALDAMAGE"))
-                        && (myCar.position.lane == 4 || obstacleAccel.get("TOTALDAMAGE") <= obstacleRight.get("TOTALDAMAGE"))) {
-                        fileMaker.logger("ALL DAMAGED : USE COMMAND ACCELERATE");
-                        return ACCELERATE;
+                    if (lookupPowerups.hasPowerUp(PowerUps.BOOST) && obstacleBoost.get("TOTALDAMAGE") <= 2) {
+                        fileMaker.logger("USE COMMAND BOOST");
+                        return BOOST;
                     } else {
-                        fileMaker.logger("ALL DAMAGED : TURN LEFT OR RIGHT");
-                        if (myCar.position.lane == 1) return TURN_RIGHT;
-                        else if (myCar.position.lane == 4) return TURN_LEFT;
-                        else return (obstacleLeft.get("TOTALDAMAGE") <= obstacleRight.get("TOTALDAMAGE")) ? TURN_LEFT
-                                : TURN_RIGHT;
+                        if (obstacleAccel.get("TOTALDAMAGE") <= 1) {
+                            fileMaker.logger("USE COMMAND ACCELERATE");
+                            return ACCELERATE;
+                        } else {
+                            fileMaker.logger("DO NOTHING");
+                            return DO_NOTHING;
+                        }
                     }
                 }
             case "LEFT":
@@ -198,8 +198,13 @@ public class Bot {
                         fileMaker.logger("ALL DAMAGED : TURN LEFT OR RIGHT");
                         if (myCar.position.lane == 1) return TURN_RIGHT;
                         else if (myCar.position.lane == 4) return TURN_LEFT;
-                        else return (obstacleLeft.get("TOTALDAMAGE") <= obstacleRight.get("TOTALDAMAGE")) ? TURN_LEFT
-                                : TURN_RIGHT;
+                        else {
+                            if (obstacleLeft.get("TOTALDAMAGE") == obstacleRight.get("TOTALDAMAGE")) {
+                                return (myCar.position.lane == 2) ? TURN_RIGHT : TURN_LEFT;
+                            } else {
+                                return (obstacleLeft.get("TOTALDAMAGE") < obstacleRight.get("TOTALDAMAGE")) ? TURN_LEFT : TURN_RIGHT;
+                            }
+                        }
                     }
                 }
         }
