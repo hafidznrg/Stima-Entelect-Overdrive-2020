@@ -1,4 +1,5 @@
 # Tugas Besar I IF2211 Strategi Algoritma
+Program ini kami buat ditujukan untuk memenuhi tugas besar I IF2211 Strategi Algoritma Semester 2 2021/2022.
 
 ## Penjelasan Singkat Algoritma Greedy yang Diimplementasikan
 > Kelompok kami memilih menggunakan algoritma greedy by damage dan greedy by speed. Pada strategi ini, mobil kami akan mencoba sebisa mungkin untuk mengambil perintah yang tidak memberikan damage pada mobil kita. Setelah mempertimbangkan jalur yang tidak memberikan damage, kita dapat mempertimbangkan untuk semakin memperbesar kecepatan atau setidaknya mempertahankan kecepatan yang ada. Hal tersebut dapat dicapai dengan menggunakan command BOOST jika tidak ada damage yang diterima dengan kecepatan BOOST, atau menggunakan command ACCELERATE jika tidak ada damage yang diterima dengan tingkat kecepatan selanjutnya. Jika tidak memenuhi, maka pertimbangkan untuk menggunakan powerups lain. Jika semua jalur memberikan damage maka pertimbangkan menggunakan BOOST jika damage masih bisa ditolerir, jika tidak maka ambil jalur yang memberikan damage paling kecil.
